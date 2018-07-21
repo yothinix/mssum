@@ -1,18 +1,11 @@
 defmodule Mssum do
-  @moduledoc """
-  Documentation for Mssum.
-  """
+  def main do
+    issue = %{
+      :id => 1,
+      :name => "Some issue name"
+    }
 
-  @doc """
-  Hello world.
+    IO.puts issue[:name]
 
-  ## Examples
-
-      iex> Mssum.hello
-      :world
-
-  """
-  def hello do
-    :world
   end
 end
