@@ -6,13 +6,32 @@ defmodule Mssum do
     user = "yothinix"
     repository = "mssum"
 
-    make_request("/repos/#{user}/#{repository}/milestones")
+    get_latest_milestone(user, repository)
+    |> get_issue_in_milestone(user, repository)
+    |> IO.inspect
+
+  end
+
+  def get_issue_in_milestone(milestone, user, repo) do
+    is_issue_in_milestone? = fn issue -> issue["milestone"]["number"] == milestone["number"] end
+
+    get_all_issues(user, repo)
+    |> Enum.filter(is_issue_in_milestone?)
+  end
+
+  def get_all_issues(user, repo) do
+    make_request("/repos/#{user}/#{repo}/issues")
+    |> Poison.decode!
+  end
+
+  def get_latest_milestone(user, repo) do
+    make_request("/repos/#{user}/#{repo}/milestones")
     |> Poison.decode!
     |> Enum.at(-1)
     |> Map.get("url")
     |> String.replace(@github_base_url, "")
-    |> IO.inspect
-
+    |> make_request
+    |> Poison.decode!
   end
 
   def make_request(endpoint \\ "/") do
