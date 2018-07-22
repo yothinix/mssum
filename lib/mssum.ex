@@ -1,5 +1,4 @@
 defmodule Mssum do
-  # require IEx; IEx.pry
   @github_base_url Application.get_env(:app_vars, :githubBaseUrl)
 
   def main do
@@ -25,8 +24,25 @@ defmodule Mssum do
   end
 
   def render_email_template(milestone, issues) do
-    milestone |> IO.inspect
-    issues |> IO.inspect
+    """
+    Hi Team
+
+    Here is the summary for what we have done in #{milestone["title"]}:
+
+    Total Issue: #{milestone["closed_issues"]}
+    Sprint End: #{milestone["due_on"]}
+    Milestone page: #{milestone["html_url"]}
+    """
+    |> IO.puts
+
+    render = fn issue ->
+      """
+      - ##{issue["number"]} #{issue["title"]} by #{Enum.at(issue["assignees"], 0)["login"]}
+           #{issue["html_url"]}
+      """
+    end
+
+    issues |> Enum.map(render) |> IO.puts
   end
 
   def get_all_issues(milestone, user, repo) do
