@@ -4,12 +4,11 @@ defmodule Mssum do
     user = "yothinix"
     repository = "mssum"
 
-    make_request("/repos/#{user}/#{repository}/milestones") |> list_milestone
+    make_request("/repos/#{user}/#{repository}/milestones")
+    |> Poison.decode!
+    |> Enum.at(-1)
+    |> IO.inspect
 
-  end
-
-  def list_milestone(milestones) do
-    Enum.map(milestones, fn milestone -> IO.puts milestone["url"] end)
   end
 
   def make_request(endpoint \\ "/") do
@@ -18,7 +17,7 @@ defmodule Mssum do
 
     case HTTPoison.get(base_url, ["Authorization": "token #{access_token}"]) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
-        body |> Poison.decode!
+        body
       {:ok, %HTTPoison.Response{status_code: 404}} ->
         IO.puts "Not found :("
       {:error, %HTTPoison.Error{reason: reason}} ->
