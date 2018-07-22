@@ -6,21 +6,35 @@ defmodule Mssum do
     user = "yothinix"
     repository = "mssum"
 
-    get_latest_milestone(user, repository)
-    |> get_issue_in_milestone(user, repository)
-    |> IO.inspect
+    select_milestone_fields = ~w(
+      closed_issues created_at description due_on html_url number state title
+    )
+    milestone = get_latest_milestone(user, repository)
+    |> Map.take(select_milestone_fields)
 
+    fields = ~w(
+      assignees body closed at created_at html_url labels number state title
+    )
+    select_issue_fields = fn issue -> Map.take(issue, fields) end
+
+    issues = milestone
+    |> get_all_issues(user, repository)
+    |> Enum.map(select_issue_fields)
+
+    render_email_template(milestone, issues)
   end
 
-  def get_issue_in_milestone(milestone, user, repo) do
-    is_issue_in_milestone? = fn issue -> issue["milestone"]["number"] == milestone["number"] end
-
-    get_all_issues(user, repo)
-    |> Enum.filter(is_issue_in_milestone?)
+  def render_email_template(milestone, issues) do
+    milestone |> IO.inspect
+    issues |> IO.inspect
   end
 
-  def get_all_issues(user, repo) do
-    make_request("/repos/#{user}/#{repo}/issues")
+  def get_all_issues(milestone, user, repo) do
+    params = %{
+      "milestone": milestone["number"],
+      "state": "all"
+    }
+    make_request("/repos/#{user}/#{repo}/issues", params)
     |> Poison.decode!
   end
 
@@ -34,11 +48,15 @@ defmodule Mssum do
     |> Poison.decode!
   end
 
-  def make_request(endpoint \\ "/") do
+  def make_request(endpoint \\ "/", params \\ %{}) do
     base_url = "#{@github_base_url}#{endpoint}"
     access_token = Application.get_env(:app_vars, :githubAccessToken)
 
-    case HTTPoison.get(base_url, ["Authorization": "token #{access_token}"]) do
+    case HTTPoison.get(
+      base_url,
+      ["Authorization": "token #{access_token}"],
+      params: params
+    ) do
       {:ok, %HTTPoison.Response{status_code: 200, body: body}} ->
         body
       {:ok, %HTTPoison.Response{status_code: 404}} ->
